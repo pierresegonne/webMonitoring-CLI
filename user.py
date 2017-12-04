@@ -1,6 +1,34 @@
 from data import data_utils
 from data import messages as msg
 from urllib.parse import urlparse
+from website import Website
+
+def userMenu(username):
+    currentUser = data_utils.getUser(username)
+    if not currentUser:
+        currentUser = User(username)
+    print(msg.user_menu_welc1 + username + msg.user_menu_welc2)
+    commands = ['mysites', 'add', 'modify', 'delete', 'help', 'exit']
+    print(msg.user_menu_description)
+    while True:
+        cmd = input('\n' + msg.user_menu_commands + str(commands) + '\n')
+        if cmd not in commands:
+            print(msg.user_menu_command_inc)
+            continue
+        elif cmd == 'exit':
+            print(msg.user_menu_exit)
+            break
+        elif cmd == 'mysites':
+            currentUser.displayWebsites()
+        elif cmd == 'add':
+            currentUser.addWebsite()
+        elif cmd == 'modify':
+            currentUser.modifyWebsite()
+        elif cmd == 'delete':
+            currentUser.deleteWebsite()
+        elif cmd == 'help':
+            print(msg.user_menu_help)
+    return
 
 
 class User(object):
@@ -18,7 +46,7 @@ class User(object):
     def __str__(self):
         return ''
 
-    def addWebsite(self, website):
+    def addWebsite(self):
         print(msg.website_add_welc)
         name = input(msg.website_add_name)
         while True:
@@ -28,24 +56,27 @@ class User(object):
             print(msg.website_url_inc)
         while True:
             checkInterval = input(msg.website_add_check)
-            if isinstance(checkInterval, int):
+            try:
                 checkInterval = int(checkInterval)
                 break
-            print(msg.website_add_check_inc)
+            except :
+                print(msg.website_add_check_inc)
         newWebsite = Website(name=name,url=url,checkInterval=checkInterval)
         self.mySites[name] = newWebsite
         # update the data about the user
         data_utils.updateUser(self)
         return
 
-    def modifyWebsite(self, website):
+    def modifyWebsite(self):
         print(msg.website_modify_welc)
-        self.displayWebsitesNames()
+        self.displayWebsites()
         # selection by name
         while True:
             name = input(msg.website_modify_name)
             if name in self.mySites:
                 break
+            if name == 'exit':
+                return
             print(msg.website_modify_name_inc)
         website = self.mySites[name]
         # modif opts
@@ -65,24 +96,27 @@ class User(object):
         if opt == 'checkInterval':
             while True:
                 newCheck = input(msg.website_modify_check)
-                if isinstance(newCheck, int):
+                try:
                     newCheck = int(newCheck)
                     break
-                print(msg.website_modify_inc)
+                except :
+                    print(msg.website_modify_inc)
             website.checkInterval = newCheck
         self.mySites[name] = website
         # update the data about the user
         data_utils.updateUser(self)
         return
 
-    def deleteWebsite(self, website):
+    def deleteWebsite(self):
         print(msg.website_delete_welc)
-        self.displayWebsitesNames()
+        self.displayWebsites()
         # selection by name
         while True:
             name = input(msg.website_delete_name)
             if name in self.mySites:
                 break
+            if name == 'exit':
+                return
             print(msg.website_delete_name_inc)
         # deletion of the website
         self.mySites.pop(name)
@@ -90,21 +124,11 @@ class User(object):
         data_utils.updateUser(self)
         return
 
-    def displayWebsitesNames(self):
+    def displayWebsites(self):
+        print('\nYour Websites :')
         for websiteName in self.mySites.keys():
-            print(websiteName)
+            print(str(self.mySites[websiteName]))
 
     def checkUrl(self, url):
         objUrl = urlparse(url)
         return (objUrl.scheme in self.acceptedSchemesUrls)
-
-
-class Website(object):
-
-    # check interval in seconds
-    def __init__(self,name,url, checkInterval = 10):
-        self.name = name
-        self.url = url
-        self.checkInterval = checkInterval
-        # monitoring
-        self.log = {}

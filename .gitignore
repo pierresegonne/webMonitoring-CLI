@@ -105,3 +105,10 @@ ENV/
 
 # OSX
 .DS_Store
+
+# tests
+test.pkl
+test.py
+
+#data storage
+.pkl

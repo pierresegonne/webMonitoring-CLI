@@ -5,7 +5,10 @@ fansPath = './data/fansdata.pkl'
 
 def getUser(username):
     users_dic = getUsers()
-    return users_dic[username]
+    try :
+        return users_dic[username]
+    except KeyError:
+        return None
 
 def getUsers(filePath=usersPath):
     try :
