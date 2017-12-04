@@ -88,7 +88,7 @@ class Monitor(object):
             self.checkForAvailabiltyAlert(website= website, availability= availability)
         # website.twoMins[currentTime] = {'maxRespTime' : maxTime}
 
-        return {'frame':timeframe,'time':currentTime, 'indicators':{'maxTime':maxTime, 'avgTime':avgTime, 'availability':availability}}
+        return {'website': website, 'frame': timeframe,'time': currentTime, 'indicators': {'maxTime': maxTime, 'avgTime': avgTime, 'availability': availability}}
 
 
     def computeMaxResponseTime(self, website, inFrame):

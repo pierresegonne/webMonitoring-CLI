@@ -52,10 +52,39 @@ class WebmonitoringCurses(object):
         # wrapper is a function that does all of the setup and teardown, and makes sure
         # your program cleans up properly if it errors!
         print('yo dawg')
-        wrapper(self.draw_menu)
+        # websites
+        self.websitesDisplayed = {}
+        for website in self.user.mySites.values():
+            self.websitesDisplayed[website.name] = {'description': str(website), 'lastTenMin': None}
+        # alerts
+        self.alerts=[]
+
+        self.startPrinting()
+        # for now no curses, let check that the whole systems is working !
+        # wrapper(self.draw_menu)
 
 
+    def startPrinting(self):
+        time.sleep(5)
+        while True:
+            # start time important to make the check regular
+            startTime = time.time()
+            # 10s
+            while not self.queueTenMin.empty():
+                statTenMin = self.queueTenMin.get()
+                self.websitesDisplayed[statTenMin['website'].name]['lastTenMin'] = statTenMin
+            # 1h
 
+            # Alerts
+            while not self.queueAlerts.empty():
+                alert = self.queueAlerts.get()
+                self.alerts.append(alert)
+            print('\nAlerts : ')
+            print(self.alerts)
+            print('Websites : ')
+            print(self.websitesDisplayed)
+            endTime = time.time()
+            time.sleep(10-(endTime-startTime))
 
 
     def draw_menu(self,stdscr):
@@ -126,7 +155,7 @@ class WebmonitoringCurses(object):
             smincol_main = 0
             smaxrow_main = height-1
             smaxcol_main = int((width * 0.7))-1
-            main_pad.refresh(pminrow_main, pmincol_main, sminrow_main, smincol_main, smaxrow_main, smaxcol_main)
+            #main_pad.refresh(pminrow_main, pmincol_main, sminrow_main, smincol_main, smaxrow_main, smaxcol_main)
             # Alert
             pminrow_alert = 1
             pmincol_alert = int((width * 0.7))
@@ -134,7 +163,7 @@ class WebmonitoringCurses(object):
             smincol_alert = int((width * 0.7))
             smaxrow_alert = height-1
             smaxcol_alert = width
-            alert_pad.refresh(pminrow_alert, pmincol_alert, sminrow_alert, smincol_alert, smaxrow_alert, smaxcol_alert)
+            #alert_pad.refresh(pminrow_alert, pmincol_alert, sminrow_alert, smincol_alert, smaxrow_alert, smaxcol_alert)
 
             # Centering calculations
             start_x_mainTitle = 0
