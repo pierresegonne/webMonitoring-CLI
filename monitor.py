@@ -5,6 +5,8 @@ from multiprocessing import Process, Queue
 from data import data_utils
 from datetime import timedelta
 
+# Types of indicators
+indicatorsTypes = {'MAX': 'maxTime', 'AVG': 'avgTime', 'AVA': 'availability'}
 
 def startMonitor(user, queueTwoMin, queueTenMin, queueAlerts):
     Monitor(user, queueTwoMin, queueTenMin, queueAlerts)
@@ -12,13 +14,19 @@ def startMonitor(user, queueTwoMin, queueTenMin, queueAlerts):
 class Monitor(object):
 
     def __init__(self, user, queueTwoMin, queueTenMin, queueAlerts):
-        self.user = user
+        # Start Time, keep track of the elapsed time
         self.originalTime = time.time()
-        # queue to transmit all data
+        # User that uses the monitoring app, must exist !
+        self.user = user
+
+
+        # Queue to transmit all data
         self.queueTwoMin = queueTwoMin
         self.queueTenMin = queueTenMin
         self.queueAlerts = queueAlerts
-        # start monitoring
+        # Alert Storage, to check whether raised alert are to be sent
+        self.alertsDic = {}
+        # Start monitoring
         self.monitorAll()
 
 
@@ -48,6 +56,7 @@ class Monitor(object):
         """
         # print(website)
         checkInterval = website.checkInterval
+        time.sleep(checkInterval)
         while True:
             startSubProcess = time.time()
             # todo define timeout
@@ -62,6 +71,7 @@ class Monitor(object):
             self.queueTwoMin.put(twoMinsDic)
             # 10 mins
             tenMinsDic = self.getTimeframedData(website, 600, currentTime)
+            # todo add 1hour queue
             self.queueTenMin.put(tenMinsDic)
             endSubProcess = time.time()
             # print(self.queueTwoMin)
@@ -82,11 +92,16 @@ class Monitor(object):
         # Indicators
         # Max
         maxTime = self.computeMaxResponseTime(website, inFrame)
+        # Avg
         avgTime = self.computeAvgResponsetime(website, inFrame)
+        # Availability
         availability = self.computeAvailability(website, inFrame)
+
+        # Alert checking with 120 timeframe
         if (timeframe == 120):
-            self.checkForAvailabiltyAlert(website= website, availability= availability)
-        # website.twoMins[currentTime] = {'maxRespTime' : maxTime}
+            self.checkForIsDownAlert(website= website, availability= availability)
+            self.checkForIsUpAlert(website=website, availability=availability)
+
 
         return {'website': website, 'frame': timeframe,'time': currentTime, 'indicators': {'maxTime': maxTime, 'avgTime': avgTime, 'availability': availability}}
 
@@ -113,11 +128,37 @@ class Monitor(object):
         availability = availability / len(inFrame)
         return availability
 
-    def checkForAvailabiltyAlert(self,website,availability):
-        if availability < 0.8:
-            alert = {'website': str(website), 'time': time.time(), 'availability': availability}
-            self.queueAlerts.put(alert)
+    def checkForIsDownAlert(self,website,availability):
+        checkTime = time.time()
+        # Verify that the system has been running for longer than 2 minutes
+        if (checkTime-self.originalTime >= 120):
+            if availability < 0.8:
+                # website already alerted, check if the alert is gone -> value : None
+                if website.name in self.alertsDic:
+                    if not self.alertsDic[website.name]:
+                        alert = {'website': str(website), 'time': time.time(), 'availability': availability, 'status': 'DOWN'}
+                        self.alertsDic[website.name] = alert
+                        self.queueAlerts.put(alert)
+                # no alert for this website before, no check
+                else :
+                    alert = {'website': str(website), 'time': time.time(), 'availability': availability, 'status': 'DOWN'}
+                    self.alertsDic[website.name] = alert
+                    self.queueAlerts.put(alert)
+
         return
+
+    def checkForIsUpAlert(self,website,availability):
+        checkTime = time.time()
+        # Verify that the system has been running for longer than 2 minutes
+        if (checkTime - self.originalTime >= 120):
+            # Verify that the system has alerted by the site
+            if website.name in self.alertsDic:
+                if availability >= 0.8 :
+                    alert = {'website': str(website), 'time': time.time(), 'availability': availability,
+                             'status': 'UP'}
+                    self.alertsDic[website.name] = None
+                    self.queueAlerts.put(alert)
+
 
     def timedeltaToFloat(self,time_d):
         """

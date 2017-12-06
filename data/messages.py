@@ -43,5 +43,21 @@ website_url_inc = '\n! Incorrect url !'
 # Monitoring ==================================
 # =============================================
 
-# Curses display
+# Curses display access
 init_monitoring_usernotfound = '\n! Unknown user, please create this user before continuing !'
+
+# Curses window
+window_title = 'WEBMONITORING'
+window_title_1 = '     __ __        __      ___ __  __ '
+window_title_2 = '|  ||_ |__)  |\/|/  \|\ || | /  \|__)'
+window_title_3 = '|/\||__|__)  |  |\__/| \|| | \__/| \\ '
+window_author = 'P.SEGONNE'
+window_monitoring_title = 'MONITORING'
+window_monitoring_tenMin = '10 min'
+window_monitoring_hour = '1 hour'
+window_alert_title = 'ALERTS'
+window_quit = 'Press \'q\' to exit'
+
+# Curses errors
+window_err_height = '\n!! Cannot init the screen, height insufficient !!\n'
+window_err_width = '\n!! Cannot init the screen, width insufficient !!\n'

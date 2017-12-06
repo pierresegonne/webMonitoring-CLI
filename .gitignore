@@ -109,6 +109,8 @@ ENV/
 # tests
 test.pkl
 test.py
+testCurses.py
+testMail.py
 
 #data storage
-.pkl
+data/usersdata.pkl
