@@ -4,12 +4,21 @@ from urllib.parse import urlparse
 from website import Website
 
 def userMenu(username):
+    """
+    User interaction to enable websites manipulation
+    The app thus allows different profiles, for different monitoring
+    :param username:
+    :return:
+    """
+
+    # Get the current user, if not found create one
     currentUser = data_utils.getUser(username)
     if not currentUser:
         currentUser = User(username)
     print(msg.user_menu_welc1 + username + msg.user_menu_welc2)
     commands = ['mysites', 'add', 'modify', 'delete', 'help', 'exit']
     print(msg.user_menu_description)
+    # Return to the menu after each command
     while True:
         cmd = input('\n' + msg.user_menu_commands + str(commands) + '\n')
         if cmd not in commands:
@@ -32,6 +41,9 @@ def userMenu(username):
 
 
 class User(object):
+    """Class representing a user, each user possesses
+
+    """
 
     acceptedSchemesUrls = ['http', 'https']
     modificationOpt = ['url', 'checkInterval']

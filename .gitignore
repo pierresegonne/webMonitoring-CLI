@@ -110,7 +110,7 @@ ENV/
 test.pkl
 test.py
 testCurses.py
-testMail.py
+mailSender.py
 
 #data storage
 data/usersdata.pkl

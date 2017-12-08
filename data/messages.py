@@ -1,3 +1,6 @@
+import datetime
+# Thanks to http://www.network-science.de/ascii/ for the generation of titles
+
 # User menu
 user_menu_welc1 = '\n==== Welcome to the user menu {'
 user_menu_welc2 = '} ===='
@@ -46,18 +49,39 @@ website_url_inc = '\n! Incorrect url !'
 # Curses display access
 init_monitoring_usernotfound = '\n! Unknown user, please create this user before continuing !'
 
+# Curses goodbye
+curses_goodbye_height = 4
+curses_goodbye_1 = '    ____________  __  ______  __  __  ________  ____  _  __'
+curses_goodbye_2 = '  / __/ __/ __/  \ \/ / __ \/ / / / / __/ __ \/ __ \/ |/ /'
+curses_goodbye_3 = ' _\ \/ _// _/     \  / /_/ / /_/ / _\ \/ /_/ / /_/ /    / '
+curses_goodbye_4 = '/___/___/___/     /_/\____/\____/ /___/\____/\____/_/|_/   '
+
 # Curses window
 window_title = 'WEBMONITORING'
-window_title_1 = '     __ __        __      ___ __  __ '
-window_title_2 = '|  ||_ |__)  |\/|/  \|\ || | /  \|__)'
-window_title_3 = '|/\||__|__)  |  |\__/| \|| | \__/| \\ '
+window_title_1 = ' _      _________    __  _______  _  ________________  ___ '
+window_title_2 = '| | /| / / __/ _ )  /  |/  / __ \/ |/ /  _/_  __/ __ \/ _ \\'
+window_title_3 = '| |/ |/ / _// _  | / /|_/ / /_/ /    // /  / / / /_/ / , _/'
+window_title_4 = '|__/|__/___/____/ /_/  /_/\____/_/|_/___/ /_/  \____/_/|_| '
 window_author = 'P.SEGONNE'
 window_monitoring_title = 'MONITORING'
 window_monitoring_tenMin = '10 min'
 window_monitoring_hour = '1 hour'
 window_alert_title = 'ALERTS'
 window_quit = 'Press \'q\' to exit'
+window_default_stat = '…'
+
+
+# Curses Alerts
+def alert2string(alert_obj):
+    # "Website {website} is down. availability={availablility}, time={time}"
+    return 'Website ' + alert_obj['website'] + ' is ' +alert_obj['status'].lower() + '. ' + ' Availability=' + str(alert_obj['availability']) + ', time=' + str(datetime.datetime.fromtimestamp(alert_obj['time']).strftime('%Y-%m-%d %H:%M:%S'))
+
+# Mail alert
+def alert2subject(alert_obj):
+    return '[WEBMONITOR] WEBSITE : ' + alert_obj['website'] + ' IS ' + alert_obj['status']
 
 # Curses errors
 window_err_height = '\n!! Cannot init the screen, height insufficient !!\n'
 window_err_width = '\n!! Cannot init the screen, width insufficient !!\n'
+curses_cursor_inv = '\n!! Invisible cursor not supported !!\n'
+

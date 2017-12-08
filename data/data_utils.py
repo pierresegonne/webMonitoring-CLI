@@ -1,7 +1,6 @@
 import _pickle as pickle
 
 usersPath = './data/usersdata.pkl'
-fansPath = './data/fansdata.pkl'
 
 def getUser(username):
     users_dic = getUsers()
