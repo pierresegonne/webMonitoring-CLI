@@ -239,10 +239,10 @@ class WebmonitoringCurses(object):
             sys.exit(msg.window_err_height)
 
         # Titles and fixed elements
-        self.windowTitle_1 = msg.window_title_1[:int(width*0.7)-1]
-        self.windowTitle_2 = msg.window_title_2[:int(width*0.7)-1]
-        self.windowTitle_3 = msg.window_title_3[:int(width*0.7)-1]
-        self.windowTitle_4 = msg.window_title_4[:int(width*0.7)-1]
+        self.windowTitle_1 = msg.window_title_1[:width-len(msg.window_author)-1]
+        self.windowTitle_2 = msg.window_title_2[:width-len(msg.window_author)-1]
+        self.windowTitle_3 = msg.window_title_3[:width-len(msg.window_author)-1]
+        self.windowTitle_4 = msg.window_title_4[:width-len(msg.window_author)-1]
         self.author = msg.window_author[:int(width*0.3)-1]
         self.monitoringTitle = msg.window_monitoring_title[:int(width*0.7)-1]
         self.alertTitle = msg.window_alert_title[:int(width*0.3)-1]
@@ -262,8 +262,8 @@ class WebmonitoringCurses(object):
         self.windowAuthor_pos = (0,width-len(self.author)-1)
         self.windowMonitoringTitle_pos = (self.headerHeight,0)
         self.windowAlertTitle_pos = (self.headerHeight,int(width*0.7)+2)
-        self.windowTenMinSection_pos = (self.headerHeight,(int(width*0.7)-len(self.monitoringTitle))//2+len(self.monitoringTitle)-len(self.tenMinSection))
-        self.windowHourSection_pos = (self.headerHeight,int(width*0.7)-len(self.hourSection))
+        self.windowTenMinSection_pos = (self.headerHeight,(int(width*0.7)-6-len(self.monitoringTitle))//2+len(self.monitoringTitle)-len(self.tenMinSection))
+        self.windowHourSection_pos = (self.headerHeight,int(width*0.7)-6-len(self.hourSection))
         self.windowQuitIndicator = (height-self.footerHeight,0)
 
         # Rendering fields =======
@@ -308,6 +308,8 @@ class WebmonitoringCurses(object):
             stdscr.addstr(i,len(self.monitoringTitle)+1,'|')
         for i in range(self.headerHeight,height-1):
             stdscr.addstr(i,self.windowTenMinSection_pos[1]+1+len(self.tenMinSection),'|')
+        for i in range(self.headerHeight,height-1):
+            stdscr.addstr(i,self.windowHourSection_pos[1]+1+len(self.hourSection),'|')
         # Turning off attributes for framing
         stdscr.attroff(self.color_dic['FRAME'])
         return
@@ -340,7 +342,7 @@ class WebmonitoringCurses(object):
         :param stdscr:
         :return:
         """
-        width = stdscr.getmaxyx()[1]
+        height, width = stdscr.getmaxyx()
 
         # Turning on attributes for indicators
         stdscr.attron(self.color_dic['INDICATOR'])
@@ -349,7 +351,7 @@ class WebmonitoringCurses(object):
         nbrInd = len(self.indicators.keys())
 
         # Check sufficient width
-        self.indWidth = ((int(width * 0.7) - len(self.monitoringTitle)) // 2) // nbrInd
+        self.indWidth = ((int(width * 0.7) - 6 - len(self.monitoringTitle)) // 2) // (nbrInd-1)
         if self.indWidth < 4:
             self._terminateMonitoring()
             sys.exit(msg.window_err_width)
@@ -357,14 +359,38 @@ class WebmonitoringCurses(object):
         # Placing indicators
         indw = 0
         for indicator in self.indicators.keys():
-            stdscr.addstr(self.subHeaderHeight-2, len(self.monitoringTitle)+1 + self.indWidth*indw + int(
-                (self.indWidth//2)-(len(indicator)//2)-(len(indicator)%2)), indicator)
-            stdscr.addstr(self.subHeaderHeight - 2, len(self.monitoringTitle) + 1 + ((int(width * 0.7) - len(self.monitoringTitle)) // 2) + self.indWidth * indw + int(
-                (self.indWidth // 2) - (len(indicator) // 2) - (len(indicator) % 2)), indicator)
-            indw += 1
+            # Computed
+            if (indicator != 'STA') :
+                stdscr.addstr(self.subHeaderHeight-2, len(self.monitoringTitle)+1 + self.indWidth*indw + int(
+                    (self.indWidth//2)-(len(indicator)//2)-(len(indicator)%2)), indicator)
+                stdscr.addstr(self.subHeaderHeight - 2, len(self.monitoringTitle) + 1 + ((int(width * 0.7) - len(self.monitoringTitle)) // 2) + self.indWidth * indw + int(
+                    (self.indWidth // 2) - (len(indicator) // 2) - (len(indicator) % 2)), indicator)
+                indw += 1
+            # Status
+            else:
+                stdscr.addstr(self.subHeaderHeight-2, int(width*0.7)-3, indicator)
 
         # Turning off attributes for indicators
         stdscr.attroff(self.color_dic['INDICATOR'])
+
+        # Legend
+
+        # Turning on attributes for legend
+        stdscr.attron(self.color_dic['FOOTER'])
+
+        # Placing legends
+
+        # width for legends
+        indWidth_legends = (width - len(msg.window_quit)) // nbrInd
+        indw = 0
+        for indicator in self.indicators.keys():
+            legend_indicator = '| ' + indicator + '=' + self.indicators[indicator][:indWidth_legends]
+            stdscr.addstr(height-self.footerHeight, len(msg.window_quit) + indw*indWidth_legends, legend_indicator)
+            indw += 1
+
+        # Turning off attributes for legend
+        stdscr.attroff(self.color_dic['FOOTER'])
+        return
 
     def addStats(self, stdscr):
         """
@@ -387,38 +413,57 @@ class WebmonitoringCurses(object):
             indwidth = 0
             # 10 Min
             for indicator in list(self.indicators.values()):
-                if self.websitesStats[websiteName]['lastTenMin']:
-                    # Get the value of the indicator fron the sites stats which has the sub object lastenMin, which has the sub object indicators
-                    indicator_val = self.websitesStats[websiteName]['lastTenMin']['indicators'][indicator]
-                    # Only 2 digits after the decimal point
-                    indicator_val = round(indicator_val, 2)
-                    # Truncated str
-                    indicator_val = str(indicator_val)[:self.indWidth]
-                else :
-                    indicator_val = msg.window_default_stat
-                attrCode = self.turnOnAttrStat(stdscr, indicator, indicator_val)
-                stdscr.addstr(self.subHeaderHeight+indweb, len(self.monitoringTitle)+1 + self.indWidth*indwidth + int(
-                (self.indWidth//2)-(len(indicator_val)//2)-(len(indicator_val)%2)),indicator_val)
-                self.turnOffAttr(stdscr, attrCode)
-                indwidth += 1
+                # Only Computed
+                if indicator != 'status':
+                    if self.websitesStats[websiteName]['lastTenMin']:
+                        # Get the value of the indicator from the sites stats which has the sub object lastenMin, which has the sub object indicators
+                        indicator_val = self.websitesStats[websiteName]['lastTenMin']['indicators'][indicator]
+                        # Only 2 digits after the decimal point
+                        indicator_val = round(indicator_val, 2)
+                        # Truncated str
+                        indicator_val = str(indicator_val)[:self.indWidth]
+                    else :
+                        indicator_val = msg.window_default_stat
+                    attrCode = self.turnOnAttrStat(stdscr, indicator, indicator_val)
+                    stdscr.addstr(self.subHeaderHeight+indweb, len(self.monitoringTitle)+1 + self.indWidth*indwidth + int(
+                    (self.indWidth//2)-(len(indicator_val)//2)-(len(indicator_val)%2)),indicator_val)
+                    self.turnOffAttr(stdscr, attrCode)
+                    indwidth += 1
+
 
             indwidth = 0
             # 1 Hour
             for indicator in list(self.indicators.values()):
-                if self.websitesStats[websiteName]['lastHour']:
-                    # Get the value of the indicator fron the sites stats which has the sub object lasHour, which has the sub object indicators
-                    indicator_val = self.websitesStats[websiteName]['lastHour']['indicators'][indicator]
-                    # Only 2 digits after the decimal point
-                    indicator_val = round(indicator_val, 2)
-                    # Truncated str
-                    indicator_val = str(indicator_val)[:self.indWidth]
-                else :
-                    indicator_val = msg.window_default_stat
-                attrCode = self.turnOnAttrStat(stdscr, indicator, indicator_val)
-                stdscr.addstr(self.subHeaderHeight+indweb, len(self.monitoringTitle) + 1 + ((int(width * 0.7) - len(self.monitoringTitle)) // 2) + self.indWidth * indwidth + int(
-                (self.indWidth // 2) - (len(indicator_val) // 2) - (len(indicator_val) % 2)), indicator_val)
-                self.turnOffAttr(stdscr, attrCode)
-                indwidth += 1
+                # Only Computed
+                if indicator != 'status':
+                    if self.websitesStats[websiteName]['lastHour']:
+                        # Get the value of the indicator from the sites stats which has the sub object lasHour, which has the sub object indicators
+                        indicator_val = self.websitesStats[websiteName]['lastHour']['indicators'][indicator]
+                        # Only 2 digits after the decimal point
+                        indicator_val = round(indicator_val, 2)
+                        # Truncated str
+                        indicator_val = str(indicator_val)[:self.indWidth]
+                    else :
+                        indicator_val = msg.window_default_stat
+                    attrCode = self.turnOnAttrStat(stdscr, indicator, indicator_val)
+                    stdscr.addstr(self.subHeaderHeight+indweb, len(self.monitoringTitle) + 1 + ((int(width * 0.7) - len(self.monitoringTitle)) // 2) + self.indWidth * indwidth + int(
+                    (self.indWidth // 2) - (len(indicator_val) // 2) - (len(indicator_val) % 2)), indicator_val)
+                    self.turnOffAttr(stdscr, attrCode)
+                    indwidth += 1
+
+            # Status
+            indicator = 'status'
+            if self.websitesStats[websiteName]['lastTenMin']:
+
+                # Get the status from the last 10 sec refresh
+                # Always XXX so no truncating
+                status_val = str(self.websitesStats[websiteName]['lastTenMin']['indicators']['status'])
+            else :
+                status_val = msg.window_default_stat
+            attrCode = self.turnOnAttrStat(stdscr, indicator, status_val)
+            stdscr.addstr(self.subHeaderHeight + indweb, int(width * 0.7) - 3, status_val)
+            self.turnOffAttr(stdscr, attrCode)
+
 
             indweb += 1
         return

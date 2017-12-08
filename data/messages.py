@@ -67,8 +67,8 @@ window_monitoring_title = 'MONITORING'
 window_monitoring_tenMin = '10 min'
 window_monitoring_hour = '1 hour'
 window_alert_title = 'ALERTS'
-window_quit = 'Press \'q\' to exit'
-window_default_stat = '…'
+window_quit = 'Press \'q\' to exit '
+window_default_stat = '………'
 
 
 # Curses Alerts
