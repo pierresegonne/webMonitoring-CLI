@@ -3,7 +3,7 @@
 
 # ENHANCEMENTS
 
-![Enhancement File](ENHANCEMENTS.md?raw=true)
+You can see my proposition for enhancements here : [Enhancement File](ENHANCEMENTS.md)
 
 # Issues 
 
