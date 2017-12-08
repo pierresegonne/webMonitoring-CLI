@@ -1,3 +1,6 @@
+# WEB MONITORING CLI
+![App Visual](visual.png?raw=true)
+
 # Issues 
 
 install certification command for ssl in mac 
