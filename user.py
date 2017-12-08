@@ -59,6 +59,10 @@ class User(object):
         return ''
 
     def addWebsite(self):
+        """
+        Add a website to the users data
+        :return:
+        """
         print(msg.website_add_welc)
         name = input(msg.website_add_name)
         while True:
@@ -80,6 +84,11 @@ class User(object):
         return
 
     def modifyWebsite(self):
+        """
+        Modify a website from the users website
+        The user can either modify the url or the checkInterval
+        :return:
+        """
         print(msg.website_modify_welc)
         self.displayWebsites()
         # selection by name
@@ -120,6 +129,10 @@ class User(object):
         return
 
     def deleteWebsite(self):
+        """
+        Delete a website from the users websites
+        :return:
+        """
         print(msg.website_delete_welc)
         self.displayWebsites()
         # selection by name
@@ -137,10 +150,19 @@ class User(object):
         return
 
     def displayWebsites(self):
+        """
+        Display the list of the users websites
+        :return:
+        """
         print('\nYour Websites :')
         for websiteName in self.mySites.keys():
             print(str(self.mySites[websiteName]))
 
     def checkUrl(self, url):
+        """
+        Simple check on the validity of the url
+        :param url:
+        :return:
+        """
         objUrl = urlparse(url)
         return (objUrl.scheme in self.acceptedSchemesUrls)

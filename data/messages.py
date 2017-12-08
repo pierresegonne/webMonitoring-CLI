@@ -1,5 +1,9 @@
 import datetime
 # Thanks to http://www.network-science.de/ascii/ for the generation of titles
+# ==================================
+# Handling of all displayed messages
+# ==================================
+
 
 # User menu
 user_menu_welc1 = '\n==== Welcome to the user menu {'
@@ -73,11 +77,21 @@ window_default_stat = '………'
 
 # Curses Alerts
 def alert2string(alert_obj):
+    """
+    Transforms an alert into a string
+    :param alert_obj:
+    :return:
+    """
     # "Website {website} is down. availability={availablility}, time={time}"
     return 'Website ' + alert_obj['website'] + ' is ' +alert_obj['status'].lower() + '. ' + ' Availability=' + str(alert_obj['availability']) + ', time=' + str(datetime.datetime.fromtimestamp(alert_obj['time']).strftime('%Y-%m-%d %H:%M:%S'))
 
 # Mail alert
 def alert2subject(alert_obj):
+    """
+    Transforms an alert into a subject for mails
+    :param alert_obj:
+    :return:
+    """
     return '[WEBMONITOR] WEBSITE : ' + alert_obj['website'] + ' IS ' + alert_obj['status']
 
 # Curses errors

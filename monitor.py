@@ -1,25 +1,48 @@
 import time
 import requests
-import multiprocessing
 from multiprocessing import Process, Queue
-from data import data_utils
 from datetime import timedelta
 import mailSender
 
 # Types of indicators
 indicatorsTypes = {'MAX': 'maxTime', 'AVG': 'avgTime', 'AVA': 'availability', 'STA' : 'status'}
 
-def startMonitor(user, queueTwoMin, queueTenMin, queueHour, queueAlerts, testDic = None):
-    Monitor(user, queueTwoMin, queueTenMin, queueHour, queueAlerts, testDic = testDic)
+def startMonitor(user, queueTwoMin, queueTenMin, queueHour, queueAlerts, queueTermination, testDic = None):
+    """
+    Simple init of the class, for intelligibility.
+    Starting all sub processes
+    :param user:
+    :param queueTwoMin:
+    :param queueTenMin:
+    :param queueHour:
+    :param queueAlerts:
+    :param queueTermination:
+    :param testDic:
+    :return:
+    """
+    Monitor(user, queueTwoMin, queueTenMin, queueHour, queueAlerts, queueTermination, testDic = testDic)
 
 class Monitor(object):
+    """
+    Class that handles all the monitoring
+    Subprocess are created for each monitored website, to handle different check intervals
+    """
 
-    def __init__(self, user, queueTwoMin, queueTenMin, queueHour, queueAlerts, testDic = None):
+    def __init__(self, user, queueTwoMin, queueTenMin, queueHour, queueAlerts, queueTermination, testDic = None):
+        """
+        Init, calls at the end the monitor all functin that starts the processes
+        :param user:
+        :param queueTwoMin:
+        :param queueTenMin:
+        :param queueHour:
+        :param queueAlerts:
+        :param queueTermination:
+        :param testDic:
+        """
         # Start Time, keep track of the elapsed time
         self.originalTime = time.time()
         # User that uses the monitoring app, must exist !
         self.user = user
-
 
         # Queue to transmit all data
         self.queueTwoMin = queueTwoMin
@@ -27,11 +50,13 @@ class Monitor(object):
         self.queueHour = queueHour
         self.queueAlerts = queueAlerts
 
+        # Queue for termination
+        self.queueTermination = queueTermination
+
         # Alert Storage, to check whether raised alert are to be sent
         self.alertsDic = {}
         if testDic:
             self.alertsDic = testDic
-            print(self.alertsDic)
         self.mailer = mailSender.MailSender(mailSender.mailrecipient)
 
         # Start monitoring
@@ -39,22 +64,40 @@ class Monitor(object):
 
 
     def monitorAll(self):
-        # main monitor process
+        """
+        Starts all subprocesses for each website
+        :return:
+        """
+
         websites = self.user.mySites.values()
 
-
         # subprocesses to get the requests logs
-        processes = [Process(target=self.monitorOne, args=(website,)) for website in websites]
-        for process in processes:
+        self.processes = [Process(target=self.monitorOne, args=(website,)) for website in websites]
+
+        for process in self.processes:
+            process.daemon = True
+
+        for process in self.processes:
             process.start()
 
-
-        for process in processes:
+        for process in self.processes:
             process.join()
 
+        return
+
+    def _terminateAll(self):
+        """
+        Terminate all processes.
+        Need exception handling as it can be called several times
+        :return:
+        """
+
         # Termination of all processes
-        for process in processes:
-            process.terminate()
+        try :
+            for process in self.processes:
+                process.terminate()
+        except AttributeError:
+            pass
 
         return
 
@@ -67,15 +110,20 @@ class Monitor(object):
         :param website:
         :return:
         """
-        # print(website)
         checkInterval = website.checkInterval
         time.sleep(checkInterval)
-        while True:
+        while self\
+                .queueTermination.empty():
             startSubProcess = time.time()
-            # todo define timeout
-            req = requests.get(website.url, timeout=checkInterval)
-            reqCode = req.status_code
-            reqTime = req.elapsed
+            # todo define timeout for requests
+            try :
+                req = requests.get(website.url, timeout=checkInterval)
+                reqCode = req.status_code
+                reqTime = req.elapsed
+            # Generic to handle all kind of http exceptions
+            # Possible enhancement
+            except Exception:
+                continue
             # unix epoch time good for comparison
             currentTime = time.time()
             website.log[currentTime] = {'code': reqCode, 'responseTime': reqTime}
@@ -91,12 +139,26 @@ class Monitor(object):
 
             endSubProcess = time.time()
             # Wait for the next check
-            time.sleep(checkInterval-(endSubProcess-startSubProcess))
+            try:
+                time.sleep(checkInterval-(endSubProcess-startSubProcess))
+            except ValueError:
+                pass
 
+        # Terminate all processes
+        self._terminateAll()
+        return
 
 
     # todo suppress old logs
     def getTimeframedData(self, website, timeframe, currentTime=time.time()):
+        """
+        Get all data for a given timeframe,
+        If the timeframe is 2min checks for alerts
+        :param website:
+        :param timeframe:
+        :param currentTime:
+        :return:
+        """
         timeList = list(website.log.keys())
         # inside the dic from most recent to most ancient
         # reverse order
@@ -126,6 +188,12 @@ class Monitor(object):
 
 
     def computeMaxResponseTime(self, website, inFrame):
+        """
+        Indicator n1
+        :param website:
+        :param inFrame:
+        :return:
+        """
         maxTime = 0
         for timeOfReq in inFrame:
             if website.log[timeOfReq]['responseTime'] > timedelta(seconds=maxTime):
@@ -133,6 +201,12 @@ class Monitor(object):
         return maxTime
 
     def computeAvgResponsetime(self,website, inFrame):
+        """
+        Indicator n2
+        :param website:
+        :param inFrame:
+        :return:
+        """
         avgTime = 0
         for timeOfReq in inFrame:
             avgTime += self.timedeltaToFloat(website.log[timeOfReq]['responseTime'])
@@ -140,6 +214,12 @@ class Monitor(object):
         return avgTime
 
     def computeAvailability(self, website, inFrame):
+        """
+        Indicator n3
+        :param website:
+        :param inFrame:
+        :return:
+        """
         availability = 0
         for timeReq in inFrame:
             # All 2XX response codes
@@ -149,9 +229,21 @@ class Monitor(object):
         return availability
 
     def computeStatus(self, website, time):
+        """
+        Indicator n4, last response status
+        :param website:
+        :param time:
+        :return:
+        """
         return website.log[time]['code']
 
     def checkForIsDownAlert(self, website, availability):
+        """
+        Check for a isDown Alert.
+        :param website:
+        :param availability:
+        :return:
+        """
         checkTime = time.time()
         # Verify that the system has been running for longer than 2 minutes
         if (checkTime-self.originalTime >= 120):
@@ -173,6 +265,12 @@ class Monitor(object):
         return
 
     def checkForIsUpAlert(self, website, availability):
+        """
+        Check for is up Alert
+        :param website:
+        :param availability:
+        :return:
+        """
         checkTime = time.time()
         # Verify that the system has been running for longer than 2 minutes
         if (checkTime - self.originalTime >= 120):

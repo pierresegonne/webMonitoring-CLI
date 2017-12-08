@@ -4,6 +4,9 @@ from data import messages as msg
 mailrecipient = 'pierroseg@gmail.com'
 
 class MailSender(object):
+    """Class that allows the sending of alerts via mail.
+    To change recipient simply modifiy the mailrecipient field
+    """
 
     def __init__(self, recipient):
         self.TO = recipient
@@ -13,7 +16,11 @@ class MailSender(object):
         self.gmail_passwd = 'DataDogIsAwesome'
 
     def sendAlert(self, alert):
-
+        """
+        Sends mail via smtp server
+        :param alert:
+        :return:
+        """
         if len(self.TO) > 0:
             # SERVER
             server = smtplib.SMTP('smtp.gmail.com', 587)

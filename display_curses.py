@@ -36,6 +36,9 @@ class WebmonitoringCurses(object):
         self.queueHour = Queue()
         self.queueAlerts = Queue()
 
+        # Queue to end
+        self.queueTermination = Queue()
+
         # Dic for displayed data
         # key : website name | value : {description : str, lastTenMinute : {}, lastHour: {} }
         # Ordered alphabetically to map stats to website name more easily
@@ -51,7 +54,7 @@ class WebmonitoringCurses(object):
         # Monitoring process
         # Important not to put the args in the function as it would trigger its start
         self.monit_daemon = Process(target= monitor.startMonitor,
-                               args=(self.user, self.queueTwoMin, self.queueTenMin, self.queueHour, self.queueAlerts))
+                               args=(self.user, self.queueTwoMin, self.queueTenMin, self.queueHour, self.queueAlerts, self.queueTermination))
 
         # Display process
         display = Process(target=self.startCurses, args=())
@@ -67,7 +70,7 @@ class WebmonitoringCurses(object):
     def startCurses(self):
         """
         Wraps the curses display
-        And once curses is exited through q, terminates monitoring
+        And once cur3ses is exited through q, terminates monitoring
         :return:
         """
         # Wrapper for curses to render functionnal terminal if there is an issue
@@ -76,10 +79,19 @@ class WebmonitoringCurses(object):
         self._terminateMonitoring()
 
     def _terminateMonitoring(self):
+        """
+        Termination of all processes and subprocesses,
+        That would go on running in background
+        Trough the use of a queue to indicate to the child processes that they should stop
+        :return:
+        """
+        # Put termination message in the queue
+        self.queueTermination.put({'msg': 'terminate'})
         print(msg.curses_goodbye_1)
         print(msg.curses_goodbye_2)
         print(msg.curses_goodbye_3)
         print(msg.curses_goodbye_4)
+        # Terminate the parent monitoring process
         self.monit_daemon.terminate()
 
     def run(self, stdscr):
