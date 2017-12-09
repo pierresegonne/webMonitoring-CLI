@@ -1,7 +1,7 @@
 import smtplib
 from data import messages as msg
 
-mailrecipient = 'pierroseg@gmail.com'
+mailrecipient = ''
 
 class MailSender(object):
     """Class that allows the sending of alerts via mail.

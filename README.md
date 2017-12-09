@@ -1,14 +1,39 @@
 # WEB MONITORING CLI
 ![App Visual](misc/visual.png?raw=true)
 
+## Installation 
+
+To install the app simply clone the project, and you are good to go! Don't worry it is light ヽ(´▽`)/
+
+_NOTE : The app requires the user to have installed python 3 !_
+
+## Starting the app - Commands
+
+to start the app type go to your _webMonitoring-CLI_ directory and type ```python3 main.py {cmd}```
+
+with one of the following command : 
+
+    * -h to open help
+    * user {username} to access the user interface for the specified user
+    * monitor {username} to access the monitoring interface for the specified user
+
+## Mailing Alert 
+
+If you want to be notified by mail whenever an alert is triggered (Website up or down basically), you can add your email address 
+in the field _mailrecipient_ (line 4) of the _mailSender_ file
+
 ## MultiProcessing
+
+The following diagram describes how are organized the different processes used in the app
 ![Multi Processing Schema](misc/processesWCLI.png?raw=true)
+
+
 
 # ENHANCEMENTS
 
 You can see my proposition for enhancements here : [Enhancement File](misc/ENHANCEMENTS.md)
 
-# Issues 
+# ISSUES 
 
 install certification command for ssl in mac 
 
