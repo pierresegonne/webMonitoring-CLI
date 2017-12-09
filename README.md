@@ -1,9 +1,12 @@
 # WEB MONITORING CLI
-![App Visual](visual.png?raw=true)
+![App Visual](misc/visual.png?raw=true)
+
+## MultiProcessing
+![Multi Processing Schema](misc/processesWCLI.png?raw=true)
 
 # ENHANCEMENTS
 
-You can see my proposition for enhancements here : [Enhancement File](ENHANCEMENTS.md)
+You can see my proposition for enhancements here : [Enhancement File](misc/ENHANCEMENTS.md)
 
 # Issues 
 
